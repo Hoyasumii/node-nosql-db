@@ -4,9 +4,8 @@ import { Collection } from "./Collection";
 import { Content } from "@/types";
 
 export default class Core {
-  #data: Record<string, Content> = {};
+  public data: Record<string, Content> = {};
   #$schemas: Record<string, unknown> = {};
-
   readonly #path: string;
 
   constructor(path: string = "db.json") {
@@ -21,7 +20,8 @@ export default class Core {
 
       const { $schemas, ...storedData } = JSON.parse(databaseBuffer.toString());
 
-      this.#data = { ...storedData };
+      this.data = { ...storedData };
+
       this.#$schemas = $schemas;
     } catch (e) {
       this.save();
@@ -31,20 +31,14 @@ export default class Core {
   async save() {
     await fs.writeFile(
       this.#path,
-      JSON.stringify({ $schemas: this.#$schemas, ...this.#data }),
+      JSON.stringify({ $schemas: this.#$schemas, ...this.data }),
       {
         encoding: "utf8",
       }
     );
   }
 
-  collection = new Collection(this.#data, this);
+  collection = new Collection(this);
 
   schema = new Schema(this.#$schemas, this);
 }
-
-const core = new Core();
-
-(async () => {
-  await core.load();
-})();

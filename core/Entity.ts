@@ -4,12 +4,19 @@ import { EntitySchema } from "@/types";
 import Core from ".";
 
 export class Entity<ObjType extends object> {
+  name: string;
   #data: Array<EntitySchema<ObjType>>;
   #hashedData: Record<string, Omit<EntitySchema<ObjType>, "_id">> = {};
   #$schema: ZodSchema;
   readonly #core: Core;
 
-  constructor(data: unknown, schema: ZodSchema, core: Core) {
+  constructor(
+    name: string,
+    data: Array<EntitySchema<ObjType>>,
+    schema: ZodSchema,
+    core: Core
+  ) {
+    this.name = name;
     this.#data = data as Array<EntitySchema<ObjType>>;
     this.#$schema = schema;
     this.#core = core;
@@ -28,7 +35,7 @@ export class Entity<ObjType extends object> {
 
     const schemaParse = this.#$schema.safeParse(data).success;
 
-    if (!schemaParse) throw new Error("Invalid Schema for Entity creation");
+    if (!schemaParse) throw new Error("Invalid Schema for Entity Creation");
 
     const newEntity = { _id, _createdAt: now, _updatedAt: now, ...data };
 
@@ -39,7 +46,7 @@ export class Entity<ObjType extends object> {
       ...data,
     } as never;
 
-    await this.save();
+    await this.#core.save();
 
     return newEntity;
   }
@@ -69,7 +76,29 @@ export class Entity<ObjType extends object> {
     return returnedData;
   }
 
-  // findById() {}
+  findById<EntityKeys extends keyof EntitySchema<ObjType>>(
+    id: string,
+    keys?: Array<EntityKeys>
+  ): Pick<EntitySchema<ObjType>, EntityKeys> {
+    if (!this.#hashedData[id]) throw new Error("Invalid id");
+
+    let returnedEntity = { _id: id, ...this.#hashedData[id] } as Pick<
+      EntitySchema<ObjType>,
+      EntityKeys
+    >;
+
+    if (keys) {
+      returnedEntity = {} as Pick<EntitySchema<ObjType>, EntityKeys>;
+
+      keys.forEach((key) => {
+        returnedEntity[key] = (this.#hashedData[id] as EntitySchema<ObjType>)[
+          key
+        ];
+      });
+    }
+
+    return returnedEntity;
+  }
 
   // update() {}
   // updateById() {}

@@ -1,11 +1,1 @@
-{
-  "$schemas": {
-    "account": {
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "email": { "type": "string", "kind": "email" }
-      }
-    }
-  }
-}
+{"$schemas":{"Account":{"type":"object","properties":{"name":{"type":"string","min":4},"email":{"type":"string","kind":"email"},"password":{"type":"string","min":7}}}},"Account":{"content":[{"_id":"95b21e26-cd7e-4a29-80d5-b9e16e52c5bc","_createdAt":1730144466679,"_updatedAt":1730144466679,"name":"Alan Reis Anjos","email":"alanreisanjo@gmail.com","password":"umasenhaminha123"},{"_id":"1d1e2a2a-67e2-4df8-a278-598b85a964cd","_createdAt":1730144504267,"_updatedAt":1730144504267,"name":"Alan Reis Anjos","email":"alanreisanjo@gmail.com","password":"umasenhaminha123"},{"_id":"effc6821-68fb-4bb9-9867-1303dffd2235","_createdAt":1730144524324,"_updatedAt":1730144524324,"name":"Alan Reis Anjos","email":"alanreisanjo@gmail.com","password":"umasenhaminha123"},{"_id":"7a1d852f-ecd8-4e92-b486-307e41ddd5ce","_createdAt":1730144557287,"_updatedAt":1730144557287,"name":"Alberto","email":"alanreisanjo@gmail.com","password":"umasenhaminha123"}],"$schema":"Account"}}

@@ -1,0 +1,50 @@
+{
+  "$schemas": {
+    "Account": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "min": 4
+        },
+        "email": {
+          "type": "string",
+          "kind": "email"
+        },
+        "password": {
+          "type": "string",
+          "min": 7
+        }
+      }
+    }
+  },
+  "Account": {
+    "content": [
+      {
+        "_id": "a98f3093-2353-4e25-abb9-167a36e4080e",
+        "_createdAt": 1730145150965,
+        "_updatedAt": 1730145150965,
+        "name": "Testando 3 - undefined - 0",
+        "email": "alanreisanjo@gmail.com",
+        "password": "umasenhaminha123"
+      },
+      {
+        "_id": "a98f3093-2353-4e25-abb9-167a36e4080e23",
+        "_createdAt": 1730145150965,
+        "_updatedAt": 1730145150965,
+        "name": "Testando 3 - undefined - 1",
+        "email": "alanreisanjo@gmail.com",
+        "password": "umasenhaminha123"
+      },
+      {
+        "_id": "a98f3093-2353-4e25-abb9-167a36e4080e42",
+        "_createdAt": 1730145150965,
+        "_updatedAt": 1730145150965,
+        "name": "Testando 3 - undefined - 2",
+        "email": "alanreisanjo@gmail.com",
+        "password": "umasenhaminha123"
+      }
+    ],
+    "$schema": "Account"
+  }
+}

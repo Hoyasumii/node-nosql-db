@@ -9,6 +9,7 @@ export class Collection {
   }
 
   async create(collectionName: string, schema: string): Promise<boolean> {
+    if (collectionName === "$schemas") return false;
     if (this.#core.data[collectionName]) return false;
 
     this.#core.data[collectionName] = {

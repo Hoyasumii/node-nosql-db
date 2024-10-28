@@ -76,7 +76,7 @@ export class Entity<ObjType extends object> {
     return returnedData;
   }
 
-  findById<EntityKeys extends keyof EntitySchema<ObjType>>(
+  findById<EntityKeys extends keyof Omit<EntitySchema<ObjType>, "_id">>(
     id: string,
     keys?: Array<EntityKeys>
   ): Pick<EntitySchema<ObjType>, EntityKeys> {
@@ -100,7 +100,45 @@ export class Entity<ObjType extends object> {
     return returnedEntity;
   }
 
-  // update() {}
+  async update(
+    validatorMethod: (entity: EntitySchema<ObjType>) => boolean,
+    updateOrder: (
+      entity: EntitySchema<ObjType>,
+      index: number
+    ) => EntitySchema<ObjType>
+  ): Promise<number>;
+  async update(
+    validatorMethod: (entity: EntitySchema<ObjType>) => boolean,
+    updateOrder: Partial<EntitySchema<ObjType>>
+  ): Promise<number>;
+  async update(
+    validatorMethod: (entity: EntitySchema<ObjType>) => boolean,
+    updateOrder:
+      | ((
+          entity: EntitySchema<ObjType>,
+          index: number
+        ) => EntitySchema<ObjType>)
+      | Partial<EntitySchema<ObjType>>
+  ): Promise<number> {
+    let changesCount = 0;
+
+    this.#data.forEach((entity, index) => {
+      if (validatorMethod(entity)) {
+        changesCount++;
+
+        if (typeof updateOrder === "function") {
+          this.#data[index] = updateOrder(entity, index);
+          return;
+        }
+
+        this.#data[index] = { ...entity, ...updateOrder };
+      }
+    });
+
+    await this.save();
+    this.#optimize();
+    return changesCount;
+  }
   // updateById() {}
 
   // delete() {}

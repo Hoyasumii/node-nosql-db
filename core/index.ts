@@ -9,7 +9,7 @@ export default class Core {
   readonly #path: string;
 
   constructor(path: string = "db.json") {
-    this.#path = `${import.meta.dirname}\\${path}`;
+    this.#path = path;
   }
 
   async load() {
@@ -23,7 +23,10 @@ export default class Core {
       this.data = { ...storedData };
 
       this.#$schemas = $schemas;
-    } catch (e) {
+
+      this.collection = new Collection(this);
+      this.schema = new Schema(this.#$schemas, this);
+    } catch (_) {
       this.save();
     }
   }
@@ -31,7 +34,7 @@ export default class Core {
   async save() {
     await fs.writeFile(
       this.#path,
-      JSON.stringify({ $schemas: this.#$schemas, ...this.data }),
+      JSON.stringify({ $schemas: this.#$schemas, ...this.data }, null, 2),
       {
         encoding: "utf8",
       }
@@ -39,6 +42,5 @@ export default class Core {
   }
 
   collection = new Collection(this);
-
   schema = new Schema(this.#$schemas, this);
 }

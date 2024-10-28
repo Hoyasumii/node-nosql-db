@@ -1,8 +1,10 @@
 import fs from "node:fs/promises";
-import { SchemaManager } from "./SchemaManager";
+import { SchemaManager } from "./Schema";
+import { CollectionManager } from "./CollectionManager";
+import { Content } from "@/types";
 
 export default class Core {
-  #data: Record<string, Array<Record<string, unknown>>> = {};
+  #data: Record<string, Content> = {};
   #$schemas: Record<string, unknown> = {};
 
   readonly #path: string;
@@ -27,7 +29,6 @@ export default class Core {
   }
 
   async save() {
-    console.log({ $schemas: this.#$schemas, ...this.#data });
     await fs.writeFile(
       this.#path,
       JSON.stringify({ $schemas: this.#$schemas, ...this.#data }),
@@ -37,7 +38,7 @@ export default class Core {
     );
   }
 
-  collection = {};
+  collection = new CollectionManager(this.#data, this);
 
   schema = new SchemaManager(this.#$schemas, this);
 }

@@ -1,3 +1,4 @@
+import { ZodSchema } from "zod";
 import Core from "./index";
 
 export class CollectionManager {
@@ -7,14 +8,19 @@ export class CollectionManager {
     this.#parent = parent;
   }
 
-  
+  create(collectionName: string, schema: ZodSchema) {
+    
+  }
+
+  select();
+
+  delete();
+
+  clear();
+
 }
-
-const SecurityRules = {
-
-};
 
 const User = {
   name: "Alan",
-  email: "alanreisanjo@gmail.com"
-}
+  email: "alanreisanjo@gmail.com",
+};

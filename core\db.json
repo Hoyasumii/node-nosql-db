@@ -1,0 +1,11 @@
+{
+  "$schemas": {
+    "account": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "kind": "email" }
+      }
+    }
+  }
+}

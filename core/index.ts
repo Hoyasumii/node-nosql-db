@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
-import { SchemaManager } from "./Schema";
-import { CollectionManager } from "./CollectionManager";
+import { Schema } from "./Schema";
+import { Collection } from "./Collection";
 import { Content } from "@/types";
 
 export default class Core {
@@ -38,9 +38,9 @@ export default class Core {
     );
   }
 
-  collection = new CollectionManager(this.#data, this);
+  collection = new Collection(this.#data, this);
 
-  schema = new SchemaManager(this.#$schemas, this);
+  schema = new Schema(this.#$schemas, this);
 }
 
 const core = new Core();

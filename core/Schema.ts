@@ -2,7 +2,7 @@ import { ZodSchema } from "zod";
 import { dezerialize, SzType, zerialize } from "zodex";
 import Core from ".";
 
-export class SchemaManager {
+export class Schema {
   #core: Core;
   #schemas: Record<string, unknown>;
 
@@ -20,7 +20,8 @@ export class SchemaManager {
     return true;
   }
 
-  read(name: string): ZodSchema {
+  read(name: string): ZodSchema | false {
+    if (!this.#schemas[name]) return false;
     return dezerialize(this.#schemas[name] as SzType);
   }
 

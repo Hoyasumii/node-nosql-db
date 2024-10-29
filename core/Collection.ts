@@ -46,4 +46,6 @@ export class Collection {
     this.#core.data = {};
     await this.#core.save();
   }
+
+  list() {}
 }

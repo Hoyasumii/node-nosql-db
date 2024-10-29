@@ -43,4 +43,5 @@ export default class Core {
 
   collection = new Collection(this);
   schema = new Schema(this.#$schemas, this);
+  relationship = {};
 }

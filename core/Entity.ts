@@ -1,35 +1,37 @@
 import { randomUUID } from "node:crypto";
 import { ZodSchema } from "zod";
-import { EntitySchema } from "@/types";
+import { EntitySchema, EntityUpdatedReturn } from "@/types";
 import Core from ".";
 
-export class Entity<ObjType extends object> {
+export class Entity<ObjectType extends object> {
   name: string;
-  #data: Array<EntitySchema<ObjType>>;
-  #hashedData: Record<string, Omit<EntitySchema<ObjType>, "_id">> = {};
+  #data: Array<EntitySchema<ObjectType>>;
+  #hashedData: Record<string, EntitySchema<ObjectType>> = {};
   #$schema: ZodSchema;
   readonly #core: Core;
 
   constructor(
     name: string,
-    data: Array<EntitySchema<ObjType>>,
+    data: Array<EntitySchema<ObjectType>>,
     schema: ZodSchema,
     core: Core
   ) {
     this.name = name;
-    this.#data = data as Array<EntitySchema<ObjType>>;
+    this.#data = data as Array<EntitySchema<ObjectType>>;
     this.#$schema = schema;
     this.#core = core;
     this.#optimize();
   }
 
   #optimize() {
-    this.#data.forEach(({ _id, ...data }) => {
-      this.#hashedData[_id] = data;
+    this.#data.forEach((item) => {
+      const { _id } = item;
+
+      this.#hashedData[_id] = item;
     });
   }
 
-  async create(data: ObjType): Promise<EntitySchema<ObjType>> {
+  async create(data: ObjectType): Promise<EntitySchema<ObjectType>> {
     const _id = randomUUID().toString();
     const now = Date.now();
 
@@ -51,16 +53,16 @@ export class Entity<ObjType extends object> {
     return newEntity;
   }
 
-  find<EntityKeys extends keyof EntitySchema<ObjType>>(
-    validatorMethod: (entity: EntitySchema<ObjType>) => boolean,
+  find<EntityKeys extends keyof EntitySchema<ObjectType>>(
+    validatorMethod: (entity: EntitySchema<ObjectType>) => boolean,
     keys?: Array<EntityKeys>
-  ): Array<Pick<EntitySchema<ObjType>, EntityKeys>> {
-    const returnedData: Array<Pick<EntitySchema<ObjType>, EntityKeys>> = [];
+  ): Array<Pick<EntitySchema<ObjectType>, EntityKeys>> {
+    const returnedData: Array<Pick<EntitySchema<ObjectType>, EntityKeys>> = [];
 
     this.#data.forEach((entity) => {
       if (!validatorMethod(entity)) return;
 
-      let entityValue = {} as Pick<EntitySchema<ObjType>, EntityKeys>;
+      let entityValue = {} as Pick<EntitySchema<ObjectType>, EntityKeys>;
 
       if (keys) {
         keys.forEach((key) => {
@@ -76,58 +78,84 @@ export class Entity<ObjType extends object> {
     return returnedData;
   }
 
-  findById<EntityKeys extends keyof Omit<EntitySchema<ObjType>, "_id">>(
+  findById<EntityKeys extends keyof EntitySchema<ObjectType>>(
     id: string,
     keys?: Array<EntityKeys>
-  ): Pick<EntitySchema<ObjType>, EntityKeys> {
+  ): Pick<EntitySchema<ObjectType>, EntityKeys> {
     if (!this.#hashedData[id]) throw new Error("Invalid id");
 
-    let returnedEntity = { _id: id, ...this.#hashedData[id] } as Pick<
-      EntitySchema<ObjType>,
+    let returnedEntity = this.#hashedData[id] as Pick<
+      EntitySchema<ObjectType>,
       EntityKeys
     >;
 
     if (keys) {
-      returnedEntity = {} as Pick<EntitySchema<ObjType>, EntityKeys>;
+      returnedEntity = {} as Pick<EntitySchema<ObjectType>, EntityKeys>;
 
       keys.forEach((key) => {
-        returnedEntity[key] = (this.#hashedData[id] as EntitySchema<ObjType>)[
-          key
-        ];
+        returnedEntity[key] = (
+          this.#hashedData[id] as EntitySchema<ObjectType>
+        )[key];
       });
     }
 
     return returnedEntity;
   }
 
-  async update(
-    validatorMethod: (entity: EntitySchema<ObjType>) => boolean,
+  async update<EntityKeys extends keyof EntitySchema<ObjectType>>(
+    validatorMethod: (entity: EntitySchema<ObjectType>) => boolean,
     updateOrder: (
-      entity: EntitySchema<ObjType>,
+      entity: EntitySchema<ObjectType>,
       index: number
-    ) => EntitySchema<ObjType>
-  ): Promise<number>;
-  async update(
-    validatorMethod: (entity: EntitySchema<ObjType>) => boolean,
-    updateOrder: Partial<EntitySchema<ObjType>>
-  ): Promise<number>;
-  async update(
-    validatorMethod: (entity: EntitySchema<ObjType>) => boolean,
+    ) => EntitySchema<ObjectType>,
+    keys?: Array<EntityKeys>
+  ): Promise<EntityUpdatedReturn<ObjectType, EntityKeys>>;
+
+  async update<EntityKeys extends keyof EntitySchema<ObjectType>>(
+    validatorMethod: (entity: EntitySchema<ObjectType>) => boolean,
+    updateOrder: Partial<EntitySchema<ObjectType>>,
+    keys?: Array<EntityKeys>
+  ): Promise<EntityUpdatedReturn<ObjectType, EntityKeys>>;
+
+  async update<EntityKeys extends keyof EntitySchema<ObjectType>>(
+    validatorMethod: (entity: EntitySchema<ObjectType>) => boolean,
     updateOrder:
       | ((
-          entity: EntitySchema<ObjType>,
+          entity: EntitySchema<ObjectType>,
           index: number
-        ) => EntitySchema<ObjType>)
-      | Partial<EntitySchema<ObjType>>
-  ): Promise<number> {
+        ) => EntitySchema<ObjectType>)
+      | Partial<EntitySchema<ObjectType>>,
+    keys: Array<EntityKeys> = []
+  ): Promise<EntityUpdatedReturn<ObjectType, EntityKeys>> {
     let changesCount = 0;
+    const updatedContent: Array<Pick<EntitySchema<ObjectType>, EntityKeys>> =
+      [];
 
     this.#data.forEach((entity, index) => {
       if (validatorMethod(entity)) {
         changesCount++;
 
         if (typeof updateOrder === "function") {
-          this.#data[index] = updateOrder(entity, index);
+          const updatedItem = updateOrder(entity, index);
+
+          if (keys.length > 0) {
+            const updatedItemWithSelectedKeys: Record<string, unknown> = {};
+
+            keys?.forEach((key) => {
+              updatedItemWithSelectedKeys[key as string] = updatedItem[key];
+            });
+
+            updatedContent.push(
+              updatedItemWithSelectedKeys as Pick<
+                EntitySchema<ObjectType>,
+                EntityKeys
+              >
+            );
+          } else {
+            updatedContent.push(updatedItem);
+          }
+
+          this.#data[index] = updatedItem;
           return;
         }
 
@@ -137,22 +165,22 @@ export class Entity<ObjType extends object> {
 
     await this.save();
     this.#optimize();
-    return changesCount;
+    return { _updatedRows: changesCount, content: updatedContent };
   }
 
   async updateById(
     id: string,
-    updateOrder: (entity: EntitySchema<ObjType>) => EntitySchema<ObjType>
+    updateOrder: (entity: EntitySchema<ObjectType>) => EntitySchema<ObjectType>
   ): Promise<boolean>;
   async updateById(
     id: string,
-    updateOrder: Partial<EntitySchema<ObjType>>
+    updateOrder: Partial<EntitySchema<ObjectType>>
   ): Promise<boolean>;
   async updateById(
     id: string,
     updateOrder:
-      | ((entity: EntitySchema<ObjType>) => EntitySchema<ObjType>)
-      | Partial<EntitySchema<ObjType>>
+      | ((entity: EntitySchema<ObjectType>) => EntitySchema<ObjectType>)
+      | Partial<EntitySchema<ObjectType>>
   ) {
     if (!this.#hashedData[id]) return false;
 

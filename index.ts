@@ -3,24 +3,58 @@ import { z } from "zod";
 
 const db = new Nonoql();
 
+function* counter(limit: number) {
+  for (let index = 0; index < limit; index++) {
+    yield `Match ${limit - index}`;
+  }
+}
+
 (async () => {
   await db.load();
 
-  const zodSchema = z.object({
-    name: z.string().min(4),
-    email: z.string().email(),
-    password: z.string().min(7),
-  });
-  type Account = z.infer<typeof zodSchema>;
+  // const zodSchema = z.object({
+  //   name: z.string().min(4),
+  //   email: z.string().email(),
+  //   password: z.string().min(7),
+  // });
+  // type Account = z.infer<typeof zodSchema>;
 
   // await db.schema.create("Account", zodSchema);
 
   // await db.collection.create("Account", "Account");
 
+  const userListSchema = z.object({
+    name: z.string().min(4),
+    content: z.array(z.string()),
+  });
+
+  type UserList = z.infer<typeof userListSchema>;
+
+  await db.schema.create("UserList", userListSchema);
+
+  await db.collection.create("UserList", "UserList");
+
   if (!db.collection) throw new Error();
   if (!db.schema) throw new Error();
 
-  const accounts = db.collection.read<Account>("Account");
+  const userLists = db.collection.read<UserList>("UserList");
+
+  const newUserList = await userLists?.create({
+    name: "Alan",
+    content: [],
+  });
+
+  console.log(await userLists?.update<"content">(
+    (entity) => entity._id === newUserList?._id,
+    (entity) => {
+      for (let count of counter(5)) {
+        entity.content.push(count);
+      }
+      return entity;
+    }
+  ));
+
+  // const accounts = db.collection.read<Account>("Account");
 
   // console.log(accounts);
   // const account = await accounts?.create({
@@ -51,5 +85,5 @@ const db = new Nonoql();
   //   return entity;
   // }));
 
-  await accounts?.save();
+  // await accounts?.save();
 })();

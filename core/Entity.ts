@@ -139,7 +139,25 @@ export class Entity<ObjType extends object> {
     this.#optimize();
     return changesCount;
   }
-  // updateById() {}
+
+  async updateById(
+    id: string,
+    updateOrder: (entity: EntitySchema<ObjType>) => EntitySchema<ObjType>
+  ): Promise<boolean>;
+  async updateById(
+    id: string,
+    updateOrder: Partial<EntitySchema<ObjType>>
+  ): Promise<boolean>;
+  async updateById(
+    id: string,
+    updateOrder:
+      | ((entity: EntitySchema<ObjType>) => EntitySchema<ObjType>)
+      | Partial<EntitySchema<ObjType>>
+  ) {
+    if (!this.#hashedData[id]) return false;
+
+    return true;
+  }
 
   // delete() {}
   // deleteById() {}

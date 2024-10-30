@@ -3,10 +3,10 @@ import { Schema } from "./Schema";
 import { Collection } from "./Collection";
 import { Content } from "@/types";
 
-export default class Core<Entities extends string> {
-  public data: Record<Entities, Content<Entities>> = {} as Record<
-    Entities,
-    Content<Entities>
+export default class Core<Collections extends string> {
+  public data: Record<Collections, Content<Collections>> = {} as Record<
+    Collections,
+    Content<Collections>
   >;
   #$schemas: Record<string, unknown> = {};
   readonly #path: string;
@@ -45,7 +45,7 @@ export default class Core<Entities extends string> {
   }
 
   collection = new Collection(this);
-  schema = new Schema<Entities>(this.#$schemas, this);
+  schema = new Schema<Collections>(this.#$schemas, this);
   reference = {};
   migrate = {};
 }

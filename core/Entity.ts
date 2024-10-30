@@ -35,7 +35,7 @@ export class Entity<SelectedEntity extends string, ObjectType extends object> {
 
   async create(data: ObjectType): Promise<EntitySchema<ObjectType>> {
     if (!this.#core.data[this.name]) {
-      throw new Error("The Collection was not Created")
+      throw new Error("The Collection was not Created");
     }
 
     const _id = randomUUID().toString();
@@ -239,8 +239,26 @@ export class Entity<SelectedEntity extends string, ObjectType extends object> {
     return true;
   }
 
-  // delete() {}
-  // deleteById() {}
+  async delete(
+    notToRemoveMethod: (entity: EntitySchema<ObjectType>) => boolean
+  ): Promise<number> {
+    let removedItems = this.#data.length;
+
+    this.#data = this.#data.filter(notToRemoveMethod);
+
+    return removedItems - this.#data.length;
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    if (!this.#hashedData[id]) return false;
+
+    this.#data = this.#data.filter((entity) => entity._id !== id);
+    this.#optimize();
+
+    await this.#save();
+
+    return true;
+  }
 
   async #save() {
     await this.#core.save();

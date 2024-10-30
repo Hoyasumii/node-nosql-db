@@ -26,17 +26,22 @@ function* counter(limit: number) {
 
   const account = db.collection.select<Account>("Account");
 
+  // await db.collection.delete("Account");
+
+  console.log(await account.create({
+    name: "Alan",
+    email: "alanreisanjo@gmail.com",
+    password: "senhaqualquer123",
+  }));
+
   // db.schema.delete("Account");
 
-  console.log(
-    await account.update<"name" | "_id">(
-      (entity) => entity._createdAt === 1730300683657,
-      {
-        email: "johndoe23@email.com"
-      },
-      ["name", "_id"]
-    )
-  );
+  // console.log(
+  //   await account.updateById("0dbb4c70-2945-41b7-8e97-d5b5d948210d", {
+  //     email: "account@email.com",
+  //     name: "Meu Novo Nome 2",
+  //   })
+  // );
 
   // console.log(account.findById("0dbb4c70-2945-41b7-8e97-d5b5d948210d").name)
 

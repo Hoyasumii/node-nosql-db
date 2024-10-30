@@ -3,7 +3,6 @@ import { ZodSchema } from "zod";
 import { EntitySchema, EntityUpdatedReturn } from "@/types";
 import Core from ".";
 
-// TODO: Atualizar o _updatedAt no update
 export class Entity<SelectedEntity extends string, ObjectType extends object> {
   name: SelectedEntity;
   #data: Array<EntitySchema<ObjectType>>;
@@ -35,6 +34,10 @@ export class Entity<SelectedEntity extends string, ObjectType extends object> {
   }
 
   async create(data: ObjectType): Promise<EntitySchema<ObjectType>> {
+    if (!this.#core.data[this.name]) {
+      throw new Error("The Collection was not Created")
+    }
+
     const _id = randomUUID().toString();
     const now = Date.now();
 
@@ -44,6 +47,7 @@ export class Entity<SelectedEntity extends string, ObjectType extends object> {
 
     const newEntity = { _id, _createdAt: now, _updatedAt: now, ...data };
 
+    this.#mappedData[_id] = this.#data.length;
     this.#data.push(newEntity);
     this.#hashedData[_id] = {
       _createdAt: now,
@@ -163,7 +167,14 @@ export class Entity<SelectedEntity extends string, ObjectType extends object> {
           return;
         }
 
-        const newContent = { ...entity, ...updateOrder };
+        if (!(typeof updateOrder === "object"))
+          throw new Error("updateOrder is not an Object");
+
+        const newContent = {
+          ...entity,
+          ...updateOrder,
+          _updatedAt: Date.now(),
+        };
 
         const newExposedContent: Pick<
           EntitySchema<ObjectType>,
@@ -183,46 +194,55 @@ export class Entity<SelectedEntity extends string, ObjectType extends object> {
       }
     });
 
-    await this.save();
+    await this.#save();
     this.#optimize();
     return { _updatedRows: changesCount, content: updatedContent };
   }
 
   async updateById(
     id: string,
-    updateOrder: (entity: ObjectType) => EntitySchema<ObjectType>
+    updateOrder: (entity: ObjectType) => ObjectType
   ): Promise<boolean>;
 
   async updateById(
     id: string,
-    updateOrder: Partial<EntitySchema<ObjectType>>
+    updateOrder: Partial<ObjectType>
   ): Promise<boolean>;
 
   async updateById(
     id: string,
-    updateOrder:
-      | ((entity: EntitySchema<ObjectType>) => EntitySchema<ObjectType>)
-      | Partial<EntitySchema<ObjectType>>
+    updateOrder: ((entity: ObjectType) => ObjectType) | Partial<ObjectType>
   ): Promise<boolean> {
     if (!this.#hashedData[id]) return false;
     const index = this.#mappedData[id];
 
+    const { _id, _createdAt, _updatedAt: _, ...data } = this.#hashedData[id];
+
     if (typeof updateOrder === "function") {
-      this.#hashedData[id] = this.#data[index] = updateOrder(
-        this.#hashedData[id]
-      );
+      this.#hashedData[id] = this.#data[index] = {
+        _id,
+        _createdAt,
+        _updatedAt: Date.now(),
+        ...updateOrder(data as ObjectType),
+      };
+    } else if (typeof updateOrder === "object") {
+      this.#hashedData[id] = this.#data[index] = {
+        ...this.#hashedData[id],
+        ...updateOrder,
+        _updatedAt: Date.now(),
+      };
     } else {
-      // this.#hashedData[id] = this.#data[index] = { ...this.#hashedData[id] }
+      throw new Error("updateOrder is not an Object");
     }
 
-    await this.save();
+    await this.#save();
     return true;
   }
 
   // delete() {}
   // deleteById() {}
 
-  async save() {
+  async #save() {
     await this.#core.save();
   }
 }

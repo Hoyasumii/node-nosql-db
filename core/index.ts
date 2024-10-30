@@ -47,4 +47,5 @@ export default class Core<Entities extends string> {
   collection = new Collection(this);
   schema = new Schema<Entities>(this.#$schemas, this);
   reference = {};
+  migrate = {};
 }

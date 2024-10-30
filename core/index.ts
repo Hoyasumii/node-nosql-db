@@ -3,8 +3,11 @@ import { Schema } from "./Schema";
 import { Collection } from "./Collection";
 import { Content } from "@/types";
 
-export default class Core {
-  public data: Record<string, Content> = {};
+export default class Core<Entities extends string> {
+  public data: Record<Entities, Content<Entities>> = {} as Record<
+    Entities,
+    Content<Entities>
+  >;
   #$schemas: Record<string, unknown> = {};
   readonly #path: string;
 
@@ -42,6 +45,6 @@ export default class Core {
   }
 
   collection = new Collection(this);
-  schema = new Schema(this.#$schemas, this);
-  relationship = {};
+  schema = new Schema<Entities>(this.#$schemas, this);
+  reference = {};
 }

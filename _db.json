@@ -1,0 +1,76 @@
+{
+  "$schemas": {
+    "UserList": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "min": 4
+        },
+        "content": {
+          "type": "array",
+          "element": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "UserList": {
+    "content": [
+      {
+        "_id": "f97215c7-af2e-41bb-8399-67949145b01d",
+        "_createdAt": 1730211284797,
+        "_updatedAt": 1730211284797,
+        "name": "Alan",
+        "content": [
+          "Match 5",
+          "Match 4",
+          "Match 3",
+          "Match 2",
+          "Match 1"
+        ]
+      },
+      {
+        "_id": "6637ab08-b6fa-4590-9e26-b401e63c7a0c",
+        "_createdAt": 1730211327432,
+        "_updatedAt": 1730211327432,
+        "name": "Alan",
+        "content": [
+          "Match 5",
+          "Match 4",
+          "Match 3",
+          "Match 2",
+          "Match 1"
+        ]
+      },
+      {
+        "_id": "d3b160e9-b9a5-4bcb-81aa-e5585cecbf7c",
+        "_createdAt": 1730211335480,
+        "_updatedAt": 1730211335480,
+        "name": "Alan",
+        "content": [
+          "Match 5",
+          "Match 4",
+          "Match 3",
+          "Match 2",
+          "Match 1"
+        ]
+      },
+      {
+        "_id": "0691e92b-50e0-415a-b57f-cb76cf4d6d58",
+        "_createdAt": 1730211362562,
+        "_updatedAt": 1730211362562,
+        "name": "Alan",
+        "content": [
+          "Match 5",
+          "Match 4",
+          "Match 3",
+          "Match 2",
+          "Match 1"
+        ]
+      }
+    ],
+    "$schema": "UserList"
+  }
+}

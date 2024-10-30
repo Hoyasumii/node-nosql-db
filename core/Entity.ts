@@ -3,18 +3,19 @@ import { ZodSchema } from "zod";
 import { EntitySchema, EntityUpdatedReturn } from "@/types";
 import Core from ".";
 
-export class Entity<ObjectType extends object> {
-  name: string;
+export class Entity<SelectedEntity extends string, ObjectType extends object> {
+  name: SelectedEntity;
   #data: Array<EntitySchema<ObjectType>>;
   #hashedData: Record<string, EntitySchema<ObjectType>> = {};
+  #mappedData: Record<string, number> = {};
   #$schema: ZodSchema;
-  readonly #core: Core;
+  readonly #core: Core<SelectedEntity>;
 
   constructor(
-    name: string,
+    name: SelectedEntity,
     data: Array<EntitySchema<ObjectType>>,
     schema: ZodSchema,
-    core: Core
+    core: Core<SelectedEntity>
   ) {
     this.name = name;
     this.#data = data as Array<EntitySchema<ObjectType>>;
@@ -24,9 +25,10 @@ export class Entity<ObjectType extends object> {
   }
 
   #optimize() {
-    this.#data.forEach((item) => {
+    this.#data.forEach((item, index) => {
       const { _id } = item;
 
+      this.#mappedData[_id] = index;
       this.#hashedData[_id] = item;
     });
   }
@@ -172,18 +174,19 @@ export class Entity<ObjectType extends object> {
     id: string,
     updateOrder: (entity: EntitySchema<ObjectType>) => EntitySchema<ObjectType>
   ): Promise<boolean>;
-  async updateById(
-    id: string,
-    updateOrder: Partial<EntitySchema<ObjectType>>
-  ): Promise<boolean>;
-  async updateById(
-    id: string,
-    updateOrder:
-      | ((entity: EntitySchema<ObjectType>) => EntitySchema<ObjectType>)
-      | Partial<EntitySchema<ObjectType>>
-  ) {
-    if (!this.#hashedData[id]) return false;
 
+  async updateById(
+    id: string,
+    updateOrder: (entity: EntitySchema<ObjectType>) => EntitySchema<ObjectType>
+  ): Promise<boolean> {
+    if (!this.#hashedData[id]) return false;
+    const index = this.#mappedData[id];
+
+    this.#hashedData[id] = this.#data[index] = updateOrder(
+      this.#hashedData[id]
+    );
+
+    await this.save();
     return true;
   }
 

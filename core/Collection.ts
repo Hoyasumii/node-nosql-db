@@ -1,35 +1,37 @@
 import { Entity } from "./Entity";
 import Core from ".";
+import { Content } from "@/types";
 
-export class Collection {
-  readonly #core: Core;
+export class Collection<Entities extends string> {
+  readonly #core: Core<Entities>;
 
-  constructor(core: Core) {
+  constructor(core: Core<Entities>) {
     this.#core = core;
   }
 
-  async create(collectionName: string, schema: string): Promise<boolean> {
-    if (collectionName === "$schemas") return false;
-    if (this.#core.data[collectionName]) return false;
+  async create(entityName: Entities): Promise<boolean> {
+    if (entityName === "$schemas") return false;
+    if (this.#core.data[entityName]) return false;
+    if (!this.#core.schema.read(entityName)) return false;
 
-    this.#core.data[collectionName] = {
+    this.#core.data[entityName] = {
       content: [],
-      $schema: schema,
+      $schema: entityName,
     };
 
     await this.#core.save();
     return true;
   }
 
-  read<SchemaType extends object = any>(
-    collectionName: string
-  ): Entity<SchemaType> | undefined {
+  select<SchemaType extends object>(
+    collectionName: Entities
+  ): Entity<Entities, SchemaType> {
     const { $schema, ...data } = this.#core.data[collectionName];
 
     const schema = this.#core.schema.read($schema);
-    if (!schema) return undefined;
+    if (!schema) throw new Error("Inexistent Schema");
 
-    return new Entity<SchemaType>(
+    return new Entity<Entities, SchemaType>(
       collectionName,
       data.content as never,
       schema,
@@ -37,15 +39,19 @@ export class Collection {
     );
   }
 
-  async delete(collectionName: string) {
+  async delete(collectionName: Entities) {
     delete this.#core.data[collectionName];
     await this.#core.save();
   }
 
   async clear() {
-    this.#core.data = {};
+    this.#core.data = {} as Record<Entities, Content<Entities>>;
     await this.#core.save();
   }
 
-  list() {}
+  list(): Array<Entities> {
+    const myEntities = Object.keys(this.#core.data) as Array<Entities>;
+
+    return myEntities;
+  }
 }

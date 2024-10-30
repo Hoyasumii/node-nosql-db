@@ -23,9 +23,9 @@
       {
         "_id": "0dbb4c70-2945-41b7-8e97-d5b5d948210d",
         "_createdAt": 1730300683657,
-        "_updatedAt": 1730300683657,
-        "name": "Alan Reis Anjos - Atualizado",
-        "email": "alanreisanjo@gmail.com",
+        "_updatedAt": 1730303705873,
+        "name": "Meu novo Nome",
+        "email": "johndoe23@email.com",
         "password": "umasenhaqualquer123"
       }
     ],

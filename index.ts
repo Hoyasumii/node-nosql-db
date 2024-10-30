@@ -26,8 +26,17 @@ function* counter(limit: number) {
 
   const account = db.collection.select<Account>("Account");
 
-  db.schema.delete("Account");
+  // db.schema.delete("Account");
 
+  console.log(
+    await account.update<"name" | "_id">(
+      (entity) => entity._createdAt === 1730300683657,
+      {
+        email: "johndoe23@email.com"
+      },
+      ["name", "_id"]
+    )
+  );
 
   // console.log(account.findById("0dbb4c70-2945-41b7-8e97-d5b5d948210d").name)
 

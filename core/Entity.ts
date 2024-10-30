@@ -3,6 +3,7 @@ import { ZodSchema } from "zod";
 import { EntitySchema, EntityUpdatedReturn } from "@/types";
 import Core from ".";
 
+// TODO: Atualizar o _updatedAt no update
 export class Entity<SelectedEntity extends string, ObjectType extends object> {
   name: SelectedEntity;
   #data: Array<EntitySchema<ObjectType>>;
@@ -106,27 +107,21 @@ export class Entity<SelectedEntity extends string, ObjectType extends object> {
 
   async update<EntityKeys extends keyof EntitySchema<ObjectType>>(
     validatorMethod: (entity: EntitySchema<ObjectType>) => boolean,
-    updateOrder: (
-      entity: EntitySchema<ObjectType>,
-      index: number
-    ) => EntitySchema<ObjectType>,
+    updateOrder: (entity: ObjectType, index: number) => ObjectType,
     keys?: Array<EntityKeys>
   ): Promise<EntityUpdatedReturn<ObjectType, EntityKeys>>;
 
   async update<EntityKeys extends keyof EntitySchema<ObjectType>>(
     validatorMethod: (entity: EntitySchema<ObjectType>) => boolean,
-    updateOrder: Partial<EntitySchema<ObjectType>>,
+    updateOrder: Partial<ObjectType>,
     keys?: Array<EntityKeys>
   ): Promise<EntityUpdatedReturn<ObjectType, EntityKeys>>;
 
   async update<EntityKeys extends keyof EntitySchema<ObjectType>>(
     validatorMethod: (entity: EntitySchema<ObjectType>) => boolean,
     updateOrder:
-      | ((
-          entity: EntitySchema<ObjectType>,
-          index: number
-        ) => EntitySchema<ObjectType>)
-      | Partial<EntitySchema<ObjectType>>,
+      | ((entity: ObjectType, index: number) => ObjectType)
+      | Partial<ObjectType>,
     keys: Array<EntityKeys> = []
   ): Promise<EntityUpdatedReturn<ObjectType, EntityKeys>> {
     let changesCount = 0;
@@ -138,7 +133,14 @@ export class Entity<SelectedEntity extends string, ObjectType extends object> {
         changesCount++;
 
         if (typeof updateOrder === "function") {
-          const updatedItem = updateOrder(entity, index);
+          const { _id, _createdAt, _updatedAt: _, ...entityData } = entity;
+
+          const updatedItem: EntitySchema<ObjectType> = {
+            _id,
+            _createdAt,
+            _updatedAt: Date.now(),
+            ...updateOrder(entityData as ObjectType, index),
+          };
 
           if (keys.length > 0) {
             const updatedItemWithSelectedKeys: Record<string, unknown> = {};
@@ -161,7 +163,23 @@ export class Entity<SelectedEntity extends string, ObjectType extends object> {
           return;
         }
 
-        this.#data[index] = { ...entity, ...updateOrder };
+        const newContent = { ...entity, ...updateOrder };
+
+        const newExposedContent: Pick<
+          EntitySchema<ObjectType>,
+          EntityKeys
+        > = {} as never;
+
+        if (keys.length > 0) {
+          keys.forEach((key) => {
+            newExposedContent[key] = newContent[key];
+          });
+          updatedContent.push(newExposedContent);
+        } else {
+          updatedContent.push(newContent);
+        }
+
+        this.#data[index] = newContent;
       }
     });
 
@@ -172,19 +190,30 @@ export class Entity<SelectedEntity extends string, ObjectType extends object> {
 
   async updateById(
     id: string,
-    updateOrder: (entity: EntitySchema<ObjectType>) => EntitySchema<ObjectType>
+    updateOrder: (entity: ObjectType) => EntitySchema<ObjectType>
   ): Promise<boolean>;
 
   async updateById(
     id: string,
-    updateOrder: (entity: EntitySchema<ObjectType>) => EntitySchema<ObjectType>
+    updateOrder: Partial<EntitySchema<ObjectType>>
+  ): Promise<boolean>;
+
+  async updateById(
+    id: string,
+    updateOrder:
+      | ((entity: EntitySchema<ObjectType>) => EntitySchema<ObjectType>)
+      | Partial<EntitySchema<ObjectType>>
   ): Promise<boolean> {
     if (!this.#hashedData[id]) return false;
     const index = this.#mappedData[id];
 
-    this.#hashedData[id] = this.#data[index] = updateOrder(
-      this.#hashedData[id]
-    );
+    if (typeof updateOrder === "function") {
+      this.#hashedData[id] = this.#data[index] = updateOrder(
+        this.#hashedData[id]
+      );
+    } else {
+      // this.#hashedData[id] = this.#data[index] = { ...this.#hashedData[id] }
+    }
 
     await this.save();
     return true;
